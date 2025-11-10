@@ -1,0 +1,197 @@
+# Project Title
+AI-Powered Resume Builder Website
+
+# Project Description
+Build a modern, full-featured **AI Resume Builder Website** that allows users to create, edit, and download professional resumes with smart AI assistance. The platform should support real-time editing, customizable templates, resume analytics, and AI-powered suggestions. It should also include user authentication, autosave, resume sharing, and premium subscription tiers.
+
+The website should be fast, responsive, user-friendly, and optimized for mobile and desktop devices.
+
+---
+
+# Core Features (MVP)
+
+## 🖋️ Resume Creation
+- Clean, section-based resume editor with live preview
+- Section categories:
+  - Personal Information (Name, Contact, Social Links)
+  - Professional Summary
+  - Work Experience
+  - Education
+  - Skills
+  - Projects
+  - Certifications
+  - Achievements
+  - Languages
+  - Interests/Hobbies
+- Ability to reorder or hide sections
+- Add, edit, and delete items dynamically
+- Auto-formatting for better readability
+
+## 📄 Output Options
+- Export and download resumes in **PDF, DOCX, and TXT** formats
+- Print-friendly preview
+- Save drafts automatically (autosave)
+- Resume history: maintain multiple resumes under one account
+
+## 💾 Accounts & Data
+- User registration and login (Email/Password + Google + LinkedIn)
+- JWT-based authentication
+- Secure database storage for user data and resumes
+- Autosave on every change
+- Ability to duplicate or delete old resumes
+
+## 🎨 UI/UX Essentials
+- Intuitive, clean, modern UI
+- Real-time live preview while editing
+- Responsive layout (desktop, tablet, mobile)
+- Drag-and-drop section reorder
+- Inline form validation for required fields
+- Dark/Light mode toggle
+
+---
+
+# Advanced Features
+
+## 🧩 Customization
+- Multiple professional **template themes** (Classic, Modern, Minimalist, Creative)
+- Custom color palettes
+- Font family and size customization
+- Layout modes (single-column, dual-column, timeline)
+- Toggle visibility of sections
+
+## 🔍 Content Assistance
+- Pre-filled **sample templates** for different job roles
+- Context-based **suggestions** for each section (e.g., work experience bullet points)
+- Keyword optimization recommendations for **ATS (Applicant Tracking Systems)**
+- **Job title–based suggestions** (skills, responsibilities, achievements)
+
+## 💼 Integrations
+- **LinkedIn import** (auto-fill from profile)
+- Export to **Google Drive** or **Dropbox**
+- Generate a **shareable public link** (e.g., `myresume.io/username`)
+- Resume QR code for quick sharing
+
+## 💬 Collaboration
+- Invite mentors or recruiters to view and comment on a resume
+- Inline commenting or suggestion mode
+
+---
+
+# Premium & AI-Powered Features
+
+## 🤖 AI Resume Assistant
+- **AI Summary Generator:** create professional summaries from minimal input
+- **AI Bullet Point Generator:** generate quantified achievements for roles
+- **AI Skill Matcher:** match job descriptions with relevant resume skills
+- **AI Resume Score:** provide rating and actionable feedback on structure, grammar, and keyword use
+- **AI Cover Letter Generator:** generate tailored cover letters
+- **AI Job Fit Analyzer:** compare resume with job posting and suggest improvements
+
+## 🧠 ATS & Job Description Integration
+- Paste a job description → AI analyzes and optimizes the resume
+- ATS keyword check and score visualization
+- Resume optimization suggestions based on industry and role
+
+## 📊 Analytics Dashboard
+- Resume performance metrics (views, downloads, shares)
+- Track visits and engagement for shared links
+- Keyword density and readability analytics
+
+---
+
+# SaaS & Business Features
+
+- Free and Premium subscription plans
+- Payment integration via **Razorpay, Stripe, or PayPal**
+- Credit-based system for AI resume generations
+- Admin dashboard:
+  - Manage users, subscriptions, templates, and analytics
+- Billing history and subscription management for users
+
+---
+
+# Technical Requirements
+
+## Frontend
+- **React + Tailwind CSS** (modern, responsive design)
+- State management: **Zustand or Redux Toolkit**
+- Routing: React Router
+- **Rich text editing** for description fields
+- PDF rendering: `jspdf`, `react-pdf`, or server-side export
+- API communication via Axios or Fetch
+- Component-driven UI for modularity
+
+## Backend
+- **Node.js + Express.js** REST API
+- **MongoDB or PostgreSQL** for data storage
+- JWT Authentication
+- Cloud storage (AWS S3 or Firebase) for resume templates and files
+- Autosave endpoint for real-time updates
+- AI endpoints for GPT-style integration
+
+## AI Integration
+- Integrate **OpenAI API** (GPT models) or **Gemini API**
+- Use AI for:
+  - Summary writing
+  - Bullet point generation
+  - Job keyword analysis
+  - Resume scoring
+  - Cover letter generation
+- AI caching and request throttling for performance optimization
+
+## Infrastructure
+- **Vercel / Netlify** for frontend deployment
+- **Render / Railway / AWS Lambda** for backend
+- SSL & SEO optimization
+- Web analytics integration (Google Analytics, PostHog)
+
+---
+
+# Bonus & Growth Features
+
+- Resume comparison tool (view differences between two versions)
+- Version history rollback
+- Multi-language support (English, Hindi, Spanish, etc.)
+- Community templates — users can submit and share their designs
+- Resume “Health Meter” (gamified score)
+- Email-based resume sharing
+- Mobile responsive PWA (Progressive Web App)
+- Chatbot or AI guide to help users through resume building
+
+---
+
+# Design Guidelines
+- Clean, professional, and minimal aesthetic
+- Rounded corners (2xl), soft shadows, modern typography
+- Tailwind color palette consistency
+- Accessible design (contrast-friendly)
+- Animations via **Framer Motion**
+- Template preview thumbnails for selection
+- Use of **shadcn/ui** components where applicable
+
+---
+
+# User Flow Summary
+1. User signs up or logs in  
+2. Chooses a resume template  
+3. Fills sections with guided editor  
+4. Gets live preview of changes  
+5. Optionally uses AI to generate or enhance content  
+6. Downloads PDF or shares public link  
+7. (Optional) Upgrades to premium for advanced templates or AI features  
+
+---
+
+# Deliverables
+- Fully functional **React-based web app**
+- REST API backend with AI integration
+- PDF and shareable resume generation
+- Responsive, accessible UI
+- Authentication + Database integration
+- Payment and subscription logic
+- Admin panel for template and user management
+
+---
+
+# Goal
+Deliver a **production-ready, scalable AI Resume Builder Platform** with a strong focus on usability, performance, and design. The app should empower users to build standout resumes quickly with the help of smart AI guidance and a beautiful user experience.
