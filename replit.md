@@ -4,6 +4,13 @@
 ResumeAI is a modern, production-ready web application that allows users to create professional resumes with AI assistance. The platform provides real-time editing, multiple professional templates, AI-powered content generation, and payment integration for premium features.
 
 ## Recent Changes
+- **2024-11-12**: Job Description Analyzer feature
+  - AI-powered resume-to-job matching analysis
+  - Match score (0-100%) with visual indicators
+  - Identifies missing keywords and skills gaps
+  - Provides actionable recommendations
+  - ATS optimization tips
+  - Uses 1 AI credit per analysis
 - **2024-11-12**: Payment-gated download system with Razorpay
   - Atomic credit operations to prevent race conditions
   - Two pricing tiers: ₹10 (1 download), ₹100 (20 downloads)
@@ -63,10 +70,16 @@ ResumeAI is a modern, production-ready web application that allows users to crea
 - Download button opens payment modal when credits = 0
 
 ### AI Features
-- **OpenAI Integration**: Using GPT-5 for content generation
-- **Summary Generation**: Creates professional summaries from user context
-- **Bullet Point Generation**: Generates achievement-focused work experience descriptions
-- **Resume Scoring**: (Planned) Provides feedback on ATS optimization
+- **OpenAI Integration**: Using GPT-4o for all AI features
+- **Summary Generation**: Creates professional summaries from user context (1 AI credit)
+- **Bullet Point Generation**: Generates achievement-focused work experience descriptions (1 AI credit)
+- **Job Match Analyzer**: Analyzes resume against job descriptions with:
+  - Match score percentage
+  - Strengths identification
+  - Missing keywords detection
+  - Skills gap analysis
+  - Actionable recommendations
+  - ATS optimization tips (1 AI credit per analysis)
 
 ### Payment Integration
 - **Razorpay**: UPI (Google Pay, PhonePe, Paytm), cards, netbanking, wallets
@@ -106,19 +119,18 @@ ResumeAI is a modern, production-ready web application that allows users to crea
 - [x] Autosave functionality
 - [x] AI-powered summary generation
 - [x] AI-powered bullet point generation
+- [x] **Job Description Analyzer** (NEW! 2024-11-12)
 - [x] Multiple resume management
 - [x] Dark/light mode
 - [x] Responsive design
 - [x] Form validation
 - [x] Beautiful landing page
 - [x] Dashboard with stats
-- [x] **Payment-gated PDF downloads** (NEW!)
-- [x] **Razorpay integration for UPI/cards** (NEW!)
-- [x] **Download credit system** (NEW!)
+- [x] Payment-gated PDF downloads
+- [x] Razorpay integration for UPI/cards
+- [x] Download credit system
 
 ### Pending Features
-- [ ] AI resume scoring
-- [ ] Job description analyzer
 - [ ] LinkedIn import
 - [ ] Shareable resume links
 - [ ] DOCX and TXT export
