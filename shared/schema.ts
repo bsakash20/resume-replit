@@ -34,6 +34,7 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   isPremium: boolean("is_premium").default(false).notNull(),
   aiCredits: integer("ai_credits").default(3).notNull(),
+  downloadCredits: integer("download_credits").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -123,6 +124,7 @@ export const payments = pgTable("payments", {
   currency: varchar("currency", { length: 10 }).default("INR").notNull(),
   status: varchar("status", { length: 50 }).default("pending").notNull(),
   plan: varchar("plan", { length: 50 }).notNull(),
+  type: varchar("type", { length: 50 }).default("ai_credits").notNull(), // 'ai_credits' or 'download_credits'
   creditsGranted: integer("credits_granted").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
