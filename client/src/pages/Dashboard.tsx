@@ -53,11 +53,11 @@ export default function Dashboard() {
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      const newResume = await apiRequest("POST", "/api/resumes", {
+      const response = await apiRequest("POST", "/api/resumes", {
         title: "Untitled Resume",
         template: "classic",
       });
-      return newResume;
+      return await response.json();
     },
     onSuccess: (data: Resume) => {
       queryClient.invalidateQueries({ queryKey: ["/api/resumes"] });
