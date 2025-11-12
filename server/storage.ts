@@ -10,7 +10,7 @@ import {
   type InsertPayment,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (mandatory for Replit Auth)
@@ -18,6 +18,8 @@ export interface IStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserCredits(userId: string, credits: number): Promise<User | undefined>;
   updateUserPremium(userId: string, isPremium: boolean): Promise<User | undefined>;
+  addDownloadCredits(userId: string, credits: number): Promise<User | undefined>;
+  useDownloadCredit(userId: string): Promise<User | undefined>;
 
   // Resume operations
   getResumes(userId: string): Promise<Resume[]>;
@@ -31,6 +33,7 @@ export interface IStorage {
   createPayment(payment: InsertPayment): Promise<Payment>;
   updatePayment(id: string, data: Partial<Payment>): Promise<Payment | undefined>;
   getPayment(id: string): Promise<Payment | undefined>;
+  getPaymentByOrderId(orderId: string): Promise<Payment | undefined>;
   getUserPayments(userId: string): Promise<Payment[]>;
 }
 
@@ -72,6 +75,33 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId))
       .returning();
     return user;
+  }
+
+  async addDownloadCredits(userId: string, credits: number): Promise<User | undefined> {
+    const [updated] = await db
+      .update(users)
+      .set({ 
+        downloadCredits: sql`${users.downloadCredits} + ${credits}`,
+        updatedAt: new Date() 
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return updated;
+  }
+
+  async useDownloadCredit(userId: string): Promise<User | undefined> {
+    const [updated] = await db
+      .update(users)
+      .set({ 
+        downloadCredits: sql`${users.downloadCredits} - 1`,
+        updatedAt: new Date() 
+      })
+      .where(and(
+        eq(users.id, userId),
+        sql`${users.downloadCredits} > 0`
+      ))
+      .returning();
+    return updated;
   }
 
   // Resume operations
@@ -145,6 +175,11 @@ export class DatabaseStorage implements IStorage {
 
   async getPayment(id: string): Promise<Payment | undefined> {
     const [payment] = await db.select().from(payments).where(eq(payments.id, id));
+    return payment;
+  }
+
+  async getPaymentByOrderId(orderId: string): Promise<Payment | undefined> {
+    const [payment] = await db.select().from(payments).where(eq(payments.razorpayOrderId, orderId));
     return payment;
   }
 

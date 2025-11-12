@@ -53,11 +53,10 @@ export default function Dashboard() {
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/resumes", {
+      return await apiRequest("POST", "/api/resumes", {
         title: "Untitled Resume",
         template: "classic",
       });
-      return await response.json();
     },
     onSuccess: (data: Resume) => {
       queryClient.invalidateQueries({ queryKey: ["/api/resumes"] });
@@ -180,9 +179,13 @@ export default function Dashboard() {
 
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="gap-1">
+              <Badge variant="secondary" className="gap-1" data-testid="badge-ai-credits">
                 <Sparkles className="w-3 h-3" />
                 {user?.aiCredits || 0} AI Credits
+              </Badge>
+              <Badge variant="secondary" className="gap-1" data-testid="badge-download-credits">
+                <Download className="w-3 h-3" />
+                {user?.downloadCredits || 0} Downloads
               </Badge>
               {user?.isPremium && (
                 <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 border-0">
@@ -212,6 +215,13 @@ export default function Dashboard() {
             <CardContent className="p-0 space-y-2">
               <p className="text-sm text-muted-foreground">Total Resumes</p>
               <p className="text-3xl font-bold">{resumes?.length || 0}</p>
+            </CardContent>
+          </Card>
+
+          <Card className="p-6">
+            <CardContent className="p-0 space-y-2">
+              <p className="text-sm text-muted-foreground">Download Credits</p>
+              <p className="text-3xl font-bold" data-testid="text-download-credits-stat">{user?.downloadCredits || 0}</p>
             </CardContent>
           </Card>
 

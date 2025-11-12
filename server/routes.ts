@@ -4,10 +4,25 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertResumeSchema, type Resume } from "@shared/schema";
 import OpenAI from "openai";
+import Razorpay from "razorpay";
+import crypto from "crypto";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+// Razorpay instance - keys must be set in environment
+if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+  console.warn("⚠️  Razorpay credentials not configured. Payment features will be unavailable.");
+  console.warn("   Add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET to your environment.");
+}
+
+const razorpay = process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET 
+  ? new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
+    })
+  : null;
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -211,39 +226,145 @@ Format each bullet point starting with "• " on a new line.`;
     }
   });
 
-  // Payment routes (Razorpay integration placeholder)
-  app.post("/api/payments/create-order", isAuthenticated, async (req: any, res) => {
+  // Payment routes - Download credits via Razorpay
+  app.post("/api/payments/initiate", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const { plan, amount } = req.body;
+      if (!razorpay) {
+        return res.status(503).json({ 
+          message: "Payment service unavailable. Please contact support." 
+        });
+      }
 
-      // TODO: Implement Razorpay order creation
-      // For now, return a placeholder
-      res.json({
-        message: "Payment integration coming soon",
+      const userId = req.user.claims.sub;
+      const { plan } = req.body; // 'single' or 'bundle'
+
+      // Determine amount and credits based on plan
+      const planConfig: Record<string, { amount: number; credits: number; name: string }> = {
+        single: { amount: 1000, credits: 1, name: "Single Download" }, // ₹10 in paise
+        bundle: { amount: 10000, credits: 20, name: "20 Downloads Bundle" }, // ₹100 in paise
+      };
+
+      const config = planConfig[plan];
+      if (!config) {
+        return res.status(400).json({ message: "Invalid plan" });
+      }
+
+      // Create Razorpay order
+      const order = await razorpay.orders.create({
+        amount: config.amount,
+        currency: "INR",
+        receipt: `download_${userId}_${Date.now()}`,
+      });
+
+      // Store payment record in database
+      await storage.createPayment({
+        userId,
+        razorpayOrderId: order.id,
+        amount: config.amount,
+        currency: "INR",
+        status: "pending",
         plan,
-        amount,
+        type: "download_credits",
+        creditsGranted: config.credits,
+      });
+
+      res.json({
+        orderId: order.id,
+        amount: config.amount,
+        currency: "INR",
+        keyId: process.env.RAZORPAY_KEY_ID,
       });
     } catch (error) {
-      console.error("Error creating payment order:", error);
-      res.status(500).json({ message: "Failed to create payment order" });
+      console.error("Error initiating payment:", error);
+      res.status(500).json({ message: "Failed to initiate payment" });
     }
   });
 
   app.post("/api/payments/verify", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { razorpayOrderId, razorpayPaymentId, razorpaySignature, plan } = req.body;
+      const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
 
-      // TODO: Implement Razorpay signature verification
-      // For now, return success
-      res.json({
-        message: "Payment verification coming soon",
-        success: false,
+      if (!process.env.RAZORPAY_KEY_SECRET) {
+        return res.status(503).json({ 
+          success: false,
+          message: "Payment service unavailable" 
+        });
+      }
+
+      // Verify signature
+      const generatedSignature = crypto
+        .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+        .update(`${razorpayOrderId}|${razorpayPaymentId}`)
+        .digest("hex");
+
+      if (generatedSignature !== razorpaySignature) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Invalid payment signature" 
+        });
+      }
+
+      // Get payment record
+      const payment = await storage.getPaymentByOrderId(razorpayOrderId);
+      if (!payment) {
+        return res.status(404).json({ 
+          success: false, 
+          message: "Payment record not found" 
+        });
+      }
+
+      // Prevent double-credit
+      if (payment.status === "completed") {
+        return res.json({ 
+          success: true, 
+          message: "Payment already processed" 
+        });
+      }
+
+      // Update payment status
+      await storage.updatePayment(payment.id, {
+        razorpayPaymentId,
+        razorpaySignature,
+        status: "completed",
+      });
+
+      // Add download credits to user account
+      await storage.addDownloadCredits(userId, payment.creditsGranted);
+
+      res.json({ 
+        success: true, 
+        credits: payment.creditsGranted,
+        message: `Successfully added ${payment.creditsGranted} download credit${payment.creditsGranted > 1 ? 's' : ''}` 
       });
     } catch (error) {
       console.error("Error verifying payment:", error);
-      res.status(500).json({ message: "Failed to verify payment" });
+      res.status(500).json({ 
+        success: false, 
+        message: "Failed to verify payment" 
+      });
+    }
+  });
+
+  // Download credit management
+  app.post("/api/downloads/use-credit", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const user = await storage.useDownloadCredit(userId);
+      if (!user) {
+        return res.status(403).json({ 
+          message: "Insufficient download credits" 
+        });
+      }
+
+      res.json({ 
+        success: true, 
+        remainingCredits: user.downloadCredits 
+      });
+    } catch (error) {
+      console.error("Error using download credit:", error);
+      res.status(500).json({ message: "Failed to use download credit" });
     }
   });
 

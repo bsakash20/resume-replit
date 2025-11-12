@@ -38,14 +38,16 @@ import { AchievementsForm } from "@/components/editor/AchievementsForm";
 import { LanguagesForm } from "@/components/editor/LanguagesForm";
 import { InterestsForm } from "@/components/editor/InterestsForm";
 import { TemplateSelector } from "@/components/TemplateSelector";
+import { PaymentModal } from "@/components/PaymentModal";
 
 export default function ResumeEditor() {
   const { id } = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "unsaved">("saved");
   const [showPreview, setShowPreview] = useState(true);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -101,6 +103,53 @@ export default function ResumeEditor() {
       updateMutation.mutate(data);
     }, 1000);
     return () => clearTimeout(timeoutId);
+  };
+
+  const useCreditMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/downloads/use-credit", {});
+    },
+    onSuccess: async () => {
+      if (!resume) return;
+      
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      const response = await fetch(`/api/resumes/${id}/export`);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${resume.title || "resume"}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Success",
+        description: "Resume downloaded successfully!",
+      });
+    },
+    onError: (error: Error) => {
+      if (error.message.includes("Insufficient")) {
+        setShowPaymentModal(true);
+      } else {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to download resume",
+          variant: "destructive",
+        });
+      }
+    },
+  });
+
+  const handleDownload = () => {
+    if (!user) return;
+    
+    if (user.downloadCredits > 0) {
+      useCreditMutation.mutate();
+    } else {
+      setShowPaymentModal(true);
+    }
   };
 
   if (authLoading || isLoading) {
@@ -191,6 +240,7 @@ export default function ResumeEditor() {
             <Button
               size="sm"
               variant="outline"
+              onClick={handleDownload}
               data-testid="button-download"
               className="hover-elevate active-elevate-2"
             >
@@ -249,6 +299,17 @@ export default function ResumeEditor() {
           </div>
         )}
       </div>
+
+      {/* Payment Modal */}
+      <PaymentModal
+        open={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        onSuccess={async () => {
+          await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+          await queryClient.refetchQueries({ queryKey: ["/api/auth/user"] });
+          useCreditMutation.mutate();
+        }}
+      />
     </div>
   );
 }

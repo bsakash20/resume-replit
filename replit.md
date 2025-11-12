@@ -4,12 +4,17 @@
 ResumeAI is a modern, production-ready web application that allows users to create professional resumes with AI assistance. The platform provides real-time editing, multiple professional templates, AI-powered content generation, and payment integration for premium features.
 
 ## Recent Changes
+- **2024-11-12**: Payment-gated download system with Razorpay
+  - Atomic credit operations to prevent race conditions
+  - Two pricing tiers: ₹10 (1 download), ₹100 (20 downloads)
+  - Server-side signature verification for security
+  - Download credits displayed in Dashboard
+  - Payment modal with UPI/card support
 - **2024-01**: Initial MVP implementation with complete frontend and backend
-- Implemented Replit Auth with Google, GitHub, and email/password support
-- Created comprehensive resume editor with all core sections
-- Built AI-powered content generation for summaries and bullet points
-- Integrated Razorpay payment gateway for UPI and card payments
-- Designed three professional resume templates (Classic, Modern, Minimalist)
+  - Implemented Replit Auth with Google, GitHub, and email/password support
+  - Created comprehensive resume editor with all core sections
+  - Built AI-powered content generation for summaries and bullet points
+  - Designed three professional resume templates (Classic, Modern, Minimalist)
 
 ## User Preferences
 - Clean, professional, and minimal aesthetic
@@ -43,10 +48,19 @@ ResumeAI is a modern, production-ready web application that allows users to crea
   - `/api/payments` - Razorpay payment processing
 
 ### Database Schema
-- **users**: User profiles with AI credits and premium status
+- **users**: User profiles with AI credits, download credits, and premium status
 - **resumes**: Complete resume data with JSON sections
-- **payments**: Payment transactions and subscription tracking
+- **payments**: Payment transactions (type: 'ai_credits' or 'download_credits')
 - **sessions**: Session storage for authentication
+
+### Download Credit System
+- Users start with 0 download credits
+- Purchase options:
+  - ₹10 for 1 download credit (single PDF export)
+  - ₹100 for 20 download credits (50% savings)
+- Credits are deducted atomically before download
+- Payment verification includes signature validation
+- Download button opens payment modal when credits = 0
 
 ### AI Features
 - **OpenAI Integration**: Using GPT-5 for content generation
@@ -98,10 +112,11 @@ ResumeAI is a modern, production-ready web application that allows users to crea
 - [x] Form validation
 - [x] Beautiful landing page
 - [x] Dashboard with stats
-- [x] Payment integration setup
+- [x] **Payment-gated PDF downloads** (NEW!)
+- [x] **Razorpay integration for UPI/cards** (NEW!)
+- [x] **Download credit system** (NEW!)
 
 ### Pending Features
-- [ ] PDF export functionality
 - [ ] AI resume scoring
 - [ ] Job description analyzer
 - [ ] LinkedIn import
@@ -116,11 +131,21 @@ ResumeAI is a modern, production-ready web application that allows users to crea
 - `npm run db:studio` - Open Drizzle Studio for database management
 
 ## Environment Variables
-- `DATABASE_URL` - PostgreSQL connection string
-- `OPENAI_API_KEY` - OpenAI API key for AI features
-- `SESSION_SECRET` - Session encryption key
-- `RAZORPAY_KEY_ID` - Razorpay API key (to be added)
-- `RAZORPAY_KEY_SECRET` - Razorpay secret (to be added)
+- `DATABASE_URL` - PostgreSQL connection string (auto-configured)
+- `OPENAI_API_KEY` - OpenAI API key for AI features (configured)
+- `SESSION_SECRET` - Session encryption key (auto-configured)
+- `RAZORPAY_KEY_ID` - Razorpay API key (**REQUIRED for payments**)
+- `RAZORPAY_KEY_SECRET` - Razorpay secret (**REQUIRED for payments**)
+
+### Setting Up Razorpay (Required for Download Features)
+1. Sign up at https://razorpay.com/
+2. Go to Dashboard → Settings → API Keys
+3. Generate Test Keys for development (starts with `rzp_test_`)
+4. Add keys to Replit Secrets:
+   - Key: `RAZORPAY_KEY_ID`, Value: your key ID
+   - Key: `RAZORPAY_KEY_SECRET`, Value: your key secret
+5. Restart the application
+6. For production, generate Live Keys (starts with `rzp_live_`)
 
 ## File Structure
 ```
