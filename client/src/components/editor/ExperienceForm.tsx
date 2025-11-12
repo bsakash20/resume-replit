@@ -81,9 +81,16 @@ export function ExperienceForm({ resume, onUpdate }: ExperienceFormProps) {
         }, 500);
         return;
       }
+      
+      // Handle specific error messages
+      const errorMessage = error.message || "Failed to generate bullets";
+      const isQuotaError = errorMessage.includes("quota") || errorMessage.includes("credits");
+      
       toast({
-        title: "Error",
-        description: error.message || "Failed to generate bullets",
+        title: isQuotaError ? "Insufficient Credits" : "Error",
+        description: isQuotaError 
+          ? "You don't have enough AI credits. Please upgrade to continue using AI features."
+          : errorMessage,
         variant: "destructive",
       });
     },

@@ -50,9 +50,16 @@ export function SummaryForm({ resume, onUpdate }: SummaryFormProps) {
         }, 500);
         return;
       }
+      
+      // Handle specific error messages
+      const errorMessage = error.message || "Failed to generate summary";
+      const isQuotaError = errorMessage.includes("quota") || errorMessage.includes("credits");
+      
       toast({
-        title: "Error",
-        description: error.message || "Failed to generate summary",
+        title: isQuotaError ? "Insufficient Credits" : "Error",
+        description: isQuotaError 
+          ? "You don't have enough AI credits. Please upgrade to continue using AI features."
+          : errorMessage,
         variant: "destructive",
       });
     },
