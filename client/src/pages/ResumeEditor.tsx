@@ -18,6 +18,7 @@ import {
   Eye,
   EyeOff,
   GripVertical,
+  Target,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -39,6 +40,14 @@ import { LanguagesForm } from "@/components/editor/LanguagesForm";
 import { InterestsForm } from "@/components/editor/InterestsForm";
 import { TemplateSelector } from "@/components/TemplateSelector";
 import { PaymentModal } from "@/components/PaymentModal";
+import { JobAnalyzer } from "@/components/JobAnalyzer";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function ResumeEditor() {
   const { id } = useParams<{ id: string }>();
@@ -48,6 +57,7 @@ export default function ResumeEditor() {
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "unsaved">("saved");
   const [showPreview, setShowPreview] = useState(true);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showJobAnalyzer, setShowJobAnalyzer] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -238,6 +248,17 @@ export default function ResumeEditor() {
             />
 
             <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowJobAnalyzer(true)}
+              data-testid="button-job-analyzer"
+              className="hover-elevate active-elevate-2 hidden lg:flex"
+            >
+              <Target className="w-4 h-4 mr-2" />
+              Job Match
+            </Button>
+
+            <Button
               size="sm"
               variant="outline"
               onClick={handleDownload}
@@ -310,6 +331,22 @@ export default function ResumeEditor() {
           useCreditMutation.mutate();
         }}
       />
+
+      {/* Job Analyzer Dialog */}
+      <Dialog open={showJobAnalyzer} onOpenChange={setShowJobAnalyzer}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Target className="w-5 h-5 text-primary" />
+              Job Match Analyzer
+            </DialogTitle>
+            <DialogDescription>
+              Analyze how well your resume matches a specific job posting and get AI-powered recommendations
+            </DialogDescription>
+          </DialogHeader>
+          <JobAnalyzer resumeId={id!} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

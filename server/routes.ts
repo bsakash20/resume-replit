@@ -122,6 +122,121 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Job Analysis route
+  app.post("/api/resumes/:id/analyze-job", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Check AI credits
+      if (user.aiCredits <= 0 && !user.isPremium) {
+        return res.status(403).json({ 
+          message: "Insufficient AI credits. Please upgrade to continue." 
+        });
+      }
+
+      const resume = await storage.getResume(req.params.id, userId);
+      if (!resume) {
+        return res.status(404).json({ message: "Resume not found" });
+      }
+
+      const { jobDescription } = req.body;
+      if (!jobDescription || jobDescription.trim().length === 0) {
+        return res.status(400).json({ message: "Job description is required" });
+      }
+
+      // Prepare resume content for analysis
+      const experienceArray = (resume.experience as any[]) || [];
+      const educationArray = (resume.education as any[]) || [];
+      const skillsArray = (resume.skills as any[]) || [];
+      const projectsArray = (resume.projects as any[]) || [];
+      const certificationsArray = (resume.certifications as any[]) || [];
+
+      const resumeText = `
+RESUME:
+Name: ${resume.fullName || 'Not provided'}
+Email: ${resume.email || 'Not provided'}
+Phone: ${resume.phone || 'Not provided'}
+Location: ${resume.location || 'Not provided'}
+Website: ${resume.website || 'Not provided'}
+LinkedIn: ${resume.linkedin || 'Not provided'}
+
+Professional Summary: ${resume.summary || 'Not provided'}
+
+Skills: ${skillsArray.map((s: any) => s.name).join(', ') || 'Not provided'}
+
+Work Experience:
+${experienceArray.map((exp: any) => `
+- ${exp.position} at ${exp.company} (${exp.startDate} - ${exp.endDate || 'Present'})
+  ${exp.description || ''}
+`).join('\n') || 'Not provided'}
+
+Education:
+${educationArray.map((edu: any) => `
+- ${edu.degree} in ${edu.field} from ${edu.institution} (${edu.endDate || edu.graduationDate || ''})
+`).join('\n') || 'Not provided'}
+
+Projects: ${projectsArray.map((p: any) => `${p.name}: ${p.description}`).join('; ') || 'Not provided'}
+Certifications: ${certificationsArray.map((c: any) => c.name).join(', ') || 'Not provided'}
+`;
+
+      // Generate analysis using OpenAI
+      const prompt = `You are an expert ATS (Applicant Tracking System) and resume analyst. Analyze how well this resume matches the job description below.
+
+${resumeText}
+
+JOB DESCRIPTION:
+${jobDescription}
+
+Provide a comprehensive analysis in the following JSON format (respond ONLY with valid JSON, no markdown):
+{
+  "matchScore": <number 0-100>,
+  "overallAssessment": "<2-3 sentence summary of the match>",
+  "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"],
+  "missingKeywords": ["<keyword 1>", "<keyword 2>", "<keyword 3>"],
+  "skillsGap": ["<missing skill 1>", "<missing skill 2>", "<missing skill 3>"],
+  "recommendations": [
+    "<specific actionable recommendation 1>",
+    "<specific actionable recommendation 2>",
+    "<specific actionable recommendation 3>",
+    "<specific actionable recommendation 4>"
+  ],
+  "atsOptimization": [
+    "<ATS tip 1>",
+    "<ATS tip 2>",
+    "<ATS tip 3>"
+  ]
+}
+
+Be specific and actionable in your recommendations. Focus on concrete improvements the candidate can make.`;
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 1500,
+        temperature: 0.3,
+        response_format: { type: "json_object" }
+      });
+
+      const analysisText = completion.choices[0]?.message?.content?.trim() || "{}";
+      const analysis = JSON.parse(analysisText);
+
+      // Deduct AI credit if not premium
+      if (!user.isPremium) {
+        await storage.updateUserCredits(userId, user.aiCredits - 1);
+      }
+
+      res.json(analysis);
+    } catch (error) {
+      console.error("Error analyzing job match:", error);
+      res.status(500).json({ message: "Failed to analyze job match" });
+    }
+  });
+
   // AI generation routes
   app.post("/api/ai/generate-summary", isAuthenticated, async (req: any, res) => {
     try {
